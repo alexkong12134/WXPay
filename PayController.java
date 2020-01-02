@@ -1,4 +1,4 @@
-package com.flyer.nc.wxpay;
+package com.flyer.nc.controller.app.wxpay;
 
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
@@ -29,14 +29,12 @@ import com.flyer.nc.util.UuidUtil;
 @RequestMapping(value = "app/Pay")
 public class PayController extends BaseController {
 	public static JsonHelper util = new JsonHelper();
-	public static final String Appid = "wxbef5552b9f900067";// 小程序ID,一期
+	public static final String Appid = "wxbef*****900067";// 小程序ID,一期
 	public static final String spbill_create_ip = "127.0.0.1";// 终端IP,支持IPV4和IPV6两种格式的IP地址。调用微信支付API的机器IP
 	public static final String notify_url = "localhost";// 通知地址,异步接收微信支付结果通知的回调地址，通知url必须为外网可访问的url，不能携带参数。
 	public static final String trade_type = "JSAPI";// 交易类型,小程序固定JSAPI
-	public static final String mch_id = "1571094891";// （商铺号）
-	public static final String key = "1968a912403e42729e316132f87ca5e5";// （商户平台设置的密钥key）
-	// 商户号:1571094891 api密钥:1968a912403e42729e316132f87ca5e5,
-	// 小程序id:wxbef5552b9f900067
+	public static final String mch_id = "15****4891";// （商铺号）
+	public static final String key = "1968a912403************5";// （商户平台设置的密钥key）
 
 	/**
 	 * 支付
@@ -58,7 +56,7 @@ public class PayController extends BaseController {
 		// pd.put("total_fee", "1");// 标价金额，单位是分,前台出过来的是元
 		// pd.put("openid", "10000100");// 用户标识
 		pd.put("body", pd.getString("body"));// 商品描述
-		pd.put("total_fee", pd.getString("total_fee"));// 标价金额，单位是分,前台出过来的是元
+		pd.put("total_fee", pd.getString("total_fee"));// 标价金额，单位是分,不能有小数点
 		pd.put("openid", pd.getString("openid"));// 用户标识
 		try {
 			String nonce_str = UuidUtil.get32UUID();
@@ -102,6 +100,8 @@ public class PayController extends BaseController {
 			}
 			br.close();
 			con.getInputStream().close();
+			
+			//字符串解析 两种解析方式自选
 //			PayParam p = new PayParam();
 //			p.setNonceStr(UuidUtil.get32UUID());
 //			int start = receiveXml.indexOf("<prepay_id><![CDATA[") + "<prepay_id><![CDATA[".length();
@@ -117,7 +117,9 @@ public class PayController extends BaseController {
 //			clientStr = clientStr + "&key=1968a912403e42729e316132f87ca5e5";
 //			String clientSign = MD5Util.md5Encrypt32Upper(clientStr);// 再次签名，这个签名用于小程序端调用wx.requesetPayment方法
 //			p.setPaySign(clientSign);
+
 			// 将解析结果存储在HashMap中
+			
 			Map map = PayUtil.doXMLParse(receiveXml);
 			String return_code = (String) map.get("return_code");// 返回状态码
 			String result_code = (String) map.get("result_code");// 返回状态码
@@ -132,12 +134,9 @@ public class PayController extends BaseController {
 				String stringSignTemp = "appId=" + Appid + "&nonceStr=" + nonce_str + "&package=prepay_id=" + prepay_id
 						+ "&signType=MD5&timeStamp=" + timeStamp;
 				// 再次签名，这个签名用于小程序端调用wx.requesetPayment方法
-//				String paySign = PayUtil.sign(stringSignTemp, "1968a912403e42729e316132f87ca5e5", "utf-8")
-//						.toUpperCase();
-				String paySign = MD5Util.md5Encrypt32Upper(stringSignTemp + key);
+				String paySign = MD5Util.md5Encrypt32Upper(stringSignTemp +"&key="+ key);
 				p.put("paySign", paySign);
 			}
-			System.out.println(p);
 			util.toAppJsonMsg(response, 1, p);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -223,7 +222,6 @@ public class PayController extends BaseController {
 			String sign = MD5Util.md5Encrypt32Upper(str);// 这里是第一次签名，用于调用统一下单接口
 			System.out.println("第一次签名=" + sign);
 			tm.put("sign", sign);// 签名
-			// tm.put("key", "192006250b4c09247ec02edce69f6a2d");// key为商户平台设置的密钥key
 			// map转成要发送的xml
 			String sendXml = MapToXMLString.converter(tm).replaceAll("xmlroot", "xml").replaceAll("\\s+", "");
 			System.out.println("sendXml=" + sendXml);
